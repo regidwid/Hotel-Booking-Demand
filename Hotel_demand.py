@@ -6,7 +6,6 @@ import warnings
 import numpy as np
 import pandas as pd
 import streamlit as st
-from sklearn.ensemble import BaggingClassifier
 
 # Try joblib first, then pickle as a fallback
 try:
