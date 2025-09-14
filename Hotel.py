@@ -11,8 +11,8 @@ from pathlib import Path
 # Joblib first, pickle as fallback
 def _load_any(path):
     import pickle
-        with open(path, "rb") as f:
-            return pickle.load(f)
+    with open(path, "rb") as f:
+        return pickle.load(f)
 
 st.set_page_config(page_title="Hotel Booking Predictor", page_icon="🏨", layout="centered")
 
@@ -278,6 +278,7 @@ with st.expander("Notes / Troubleshooting"):
     st.write("- If your saved pipeline exposes OneHotEncoder categories, the app will read them (e.g., full country list).")
     st.write("- If your model needs extra features not in the defaults, the app will try to discover them; if not, add them to DEFAULT_SCHEMA/NUMERIC_RANGES.")
     st.write("- If you get 'unknown category' errors, your encoder may not ignore unknowns. Use one of the known options the model reveals.")
+
 
 
 
