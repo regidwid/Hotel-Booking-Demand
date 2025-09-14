@@ -1,11 +1,12 @@
 import streamlit as st
-import joblib
+import pickle
 import pandas as pd
 import numpy as np
 
 # Load the saved pipeline model
 try:
-    model = joblib.load('hotel_booking_prediction.sav')
+   with open('hotel_booking_prediction.sav', 'rb') as f:
+    model = pickle.load(f)
 except FileNotFoundError:
     st.error("Model file 'hotel_booking_prediction.sav' not found. Please ensure it's in the same directory.")
     st.stop()
