@@ -4,12 +4,9 @@ import pandas as pd
 import numpy as np
 
 # Load the saved pipeline model
-try:
-   with open('hotel_booking_prediction.sav', 'rb') as f:
+ with open('hotel_booking_prediction.sav', 'rb') as f:
     model = pickle.load(f)
-except FileNotFoundError:
-    st.error("Model file 'hotel_booking_prediction.sav' not found. Please ensure it's in the same directory.")
-    st.stop()
+
 
 # App title and description
 st.title("Hotel Booking Cancellation Prediction")
@@ -104,4 +101,5 @@ if st.button("Predict"):
         if prob is not None:
             st.write(f"Probability of Cancellation: {prob[0][1]:.2%}")
     except Exception as e:
+
         st.error(f"Error during prediction: {str(e)}. Ensure the input matches the model's expected features.")
