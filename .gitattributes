@@ -1,0 +1,2 @@
+*.sav filter=lfs diff=lfs merge=lfs -text
+hotel_booking_prediction_model.sav filter=lfs diff=lfs merge=lfs -text
