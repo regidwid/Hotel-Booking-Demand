@@ -1,106 +1,286 @@
+# app.py
+# Streamlit UI for a saved sklearn Pipeline (bagging model) that already includes preprocessing.
+# Put "hotel_booking_prediction.sav" in the same folder, or point the sidebar to the file.
+
 import streamlit as st
-import pickle
 import pandas as pd
 import numpy as np
+from pathlib import Path
+import sklearn
+import category_encoders
+from sklearn.ensemble import BaggingClassifier
 
-# Load the saved pipeline model
-with open('hotel_booking_prediction.sav', 'rb') as f:
- model = pickle.load(f)
 
+# Joblib first, pickle as fallback
+def _load_any(path):
+    import joblib, pickle
+    try:
+        return joblib.load(path)
+    except Exception:
+        with open(path, "rb") as f:
+            return pickle.load(f)
 
-# App title and description
-st.title("Hotel Booking Cancellation Prediction")
-st.write("Enter the booking details below to predict if the booking will be canceled. The model includes built-in preprocessing.")
+st.set_page_config(page_title="Hotel Booking Predictor", page_icon="🏨", layout="centered")
 
-# Define input fields based on typical hotel booking features
-# Numerical features with assumed min-max ranges (adjust based on your images)
-lead_time = st.number_input("Lead Time (days)", min_value=0, max_value=737, value=0)
-arrival_date_year = st.number_input("Arrival Date Year", min_value=2015, max_value=2017, value=2016)
-arrival_date_week_number = st.number_input("Arrival Date Week Number", min_value=1, max_value=53, value=1)
-arrival_date_day_of_month = st.number_input("Arrival Date Day of Month", min_value=1, max_value=31, value=1)
-stays_in_weekend_nights = st.number_input("Stays in Weekend Nights", min_value=0, max_value=19, value=0)
-stays_in_week_nights = st.number_input("Stays in Week Nights", min_value=0, max_value=50, value=1)
-adults = st.number_input("Number of Adults", min_value=0, max_value=55, value=1)
-children = st.number_input("Number of Children", min_value=0, max_value=10, value=0)
-babies = st.number_input("Number of Babies", min_value=0, max_value=10, value=0)
-previous_cancellations = st.number_input("Previous Cancellations", min_value=0, max_value=26, value=0)
-previous_bookings_not_canceled = st.number_input("Previous Bookings Not Canceled", min_value=0, max_value=72, value=0)
-booking_changes = st.number_input("Booking Changes", min_value=0, max_value=21, value=0)
-days_in_waiting_list = st.number_input("Days in Waiting List", min_value=0, max_value=391, value=0)
-adr = st.number_input("ADR (Average Daily Rate)", min_value=0.0, max_value=5400.0, value=100.0, step=0.01)
-required_car_parking_spaces = st.number_input("Required Car Parking Spaces", min_value=0, max_value=8, value=0)
-total_of_special_requests = st.number_input("Total Special Requests", min_value=0, max_value=5, value=0)
-
-# Categorical features with assumed options (adjust based on your images)
-hotel = st.selectbox("Hotel Type", ['Resort Hotel', 'City Hotel'])
-arrival_date_month = st.selectbox("Arrival Date Month", ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'])
-meal = st.selectbox("Meal Type", ['BB', 'FB', 'HB', 'SC', 'Undefined'])
-country = st.selectbox("Country", ['PRT', 'GBR', 'USA', 'ESP', 'IRL', 'FRA', 'Other'])  # Add more countries from your data if needed
-market_segment = st.selectbox("Market Segment", ['Direct', 'Corporate', 'Online TA', 'Offline TA/TO', 'Groups', 'Complementary', 'Aviation', 'Undefined'])
-distribution_channel = st.selectbox("Distribution Channel", ['Direct', 'Corporate', 'TA/TO', 'Undefined', 'GDS'])
-is_repeated_guest = st.selectbox("Is Repeated Guest?", [0, 1])
-reserved_room_type = st.selectbox("Reserved Room Type", ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'L', 'P'])
-assigned_room_type = st.selectbox("Assigned Room Type", ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'K', 'L', 'P'])
-deposit_type = st.selectbox("Deposit Type", ['No Deposit', 'Non Refund', 'Refundable'])
-customer_type = st.selectbox("Customer Type", ['Transient', 'Contract', 'Transient-Party', 'Group'])
-
-# Agent and Company are often numerical/categorical with many values; treating as numerical for simplicity
-agent = st.number_input("Agent ID", min_value=0, max_value=535, value=0)  # 0 often means null
-company = st.number_input("Company ID", min_value=0, max_value=543, value=0)  # 0 often means null
-
-# Collect all inputs into a dictionary
-input_data = {
-    'hotel': hotel,
-    'lead_time': lead_time,
-    'arrival_date_year': arrival_date_year,
-    'arrival_date_month': arrival_date_month,
-    'arrival_date_week_number': arrival_date_week_number,
-    'arrival_date_day_of_month': arrival_date_day_of_month,
-    'stays_in_weekend_nights': stays_in_weekend_nights,
-    'stays_in_week_nights': stays_in_week_nights,
-    'adults': adults,
-    'children': children,
-    'babies': babies,
-    'meal': meal,
-    'country': country,
-    'market_segment': market_segment,
-    'distribution_channel': distribution_channel,
-    'is_repeated_guest': is_repeated_guest,
-    'previous_cancellations': previous_cancellations,
-    'previous_bookings_not_canceled': previous_bookings_not_canceled,
-    'reserved_room_type': reserved_room_type,
-    'assigned_room_type': assigned_room_type,
-    'booking_changes': booking_changes,
-    'deposit_type': deposit_type,
-    'agent': agent,
-    'company': company,
-    'days_in_waiting_list': days_in_waiting_list,
-    'customer_type': customer_type,
-    'adr': adr,
-    'required_car_parking_spaces': required_car_parking_spaces,
-    'total_of_special_requests': total_of_special_requests
+# Defaults from your screenshots
+DEFAULT_SCHEMA = {
+    "numerical": [
+        "previous_cancellations",
+        "booking_changes",
+        "days_in_waiting_list",
+        "required_car_parking_spaces",
+        "total_of_special_requests",
+    ],
+    "categorical": [
+        "country",
+        "market_segment",
+        "deposit_type",
+        "customer_type",
+        "reserved_room_type",
+    ],
+    "options": {
+        # Small, friendly fallback list for country; will be replaced if the model reveals full categories
+        "country": ["PRT", "GBR", "FRA", "ESP", "DEU", "USA", "IRL", "NLD", "BRA", "BEL", "CHE", "ITA", "NOR", "SWE", "AUS", "CHN", "RUS", "CAN", "POL"],
+        "market_segment": ["Offline TA/TO", "Online TA", "Direct", "Groups", "Corporate", "Complementary", "Aviation", "Undefined"],
+        "deposit_type": ["No Deposit", "Non Refund", "Refundable"],
+        "customer_type": ["Transient-Party", "Transient", "Contract", "Group"],
+        "reserved_room_type": ["A", "E", "D", "F", "B", "G", "C", "H", "L", "P"],
+    },
 }
 
-# Button to make prediction
-if st.button("Predict"):
-    # Convert to DataFrame (model expects a DF with one row)
-    input_df = pd.DataFrame([input_data])
-    
-    # Make prediction
+# Input ranges from your screenshots (kept generous where the screenshot shows many values)
+NUMERIC_RANGES = {
+    "previous_cancellations": (0, 26, 0),      # min, max, default
+    "booking_changes": (0, 21, 0),
+    "days_in_waiting_list": (0, 400, 0),
+    "required_car_parking_spaces": (0, 2, 0),
+    "total_of_special_requests": (0, 5, 0),
+}
+
+@st.cache_resource(show_spinner=False)
+def load_model(path_str):
+    path = Path(path_str)
+    if not path.exists():
+        raise FileNotFoundError(f"Model file not found: {path}")
+    return _load_any(str(path))
+
+def infer_schema_from_model(model):
+    # Try to discover original feature groups and categorical options from the pipeline’s ColumnTransformer
+    schema = {"numerical": [], "categorical": [], "options": {}}
+
+    def walk(obj):
+        # Look for ColumnTransformer-like objects with transformers_
+        if hasattr(obj, "transformers_"):
+            for name, transformer, cols in obj.transformers_:
+                # Try to find OneHotEncoder in this branch
+                ohe = None
+                # Direct OHE
+                if hasattr(transformer, "categories_"):
+                    ohe = transformer
+                # Or OHE inside a sub-pipeline
+                if hasattr(transformer, "named_steps"):
+                    for s in transformer.named_steps.values():
+                        if hasattr(s, "categories_"):
+                            ohe = s
+                if ohe is not None:
+                    try:
+                        for col, cat in zip(cols, ohe.categories_):
+                            col = col if isinstance(col, str) else str(col)
+                            if col not in schema["categorical"]:
+                                schema["categorical"].append(col)
+                            # Clean out NaN-like strings
+                            clean = [str(x) for x in cat if str(x).lower() not in {"nan", "none"}]
+                            schema["options"][col] = clean
+                    except Exception:
+                        pass
+                else:
+                    # Treat as numerical if we didn't identify an encoder
+                    if isinstance(cols, (list, tuple, np.ndarray)):
+                        for c in cols:
+                            c = c if isinstance(c, str) else str(c)
+                            if c not in schema["numerical"]:
+                                schema["numerical"].append(c)
+        # Recurse through nested pipelines
+        if hasattr(obj, "named_steps"):
+            for s in obj.named_steps.values():
+                walk(s)
+
+    walk(model)
+    return schema
+
+def merge_schema(inferred, default):
+    merged = {
+        "numerical": list(default["numerical"]),
+        "categorical": list(default["categorical"]),
+        "options": {k: list(v) for k, v in default["options"].items()},
+    }
+    # Add any inferred numerical not in defaults
+    for c in inferred.get("numerical", []):
+        if c not in merged["numerical"] and c not in merged["categorical"]:
+            merged["numerical"].append(c)
+    # Add inferred categorical and their options
+    for c in inferred.get("categorical", []):
+        if c not in merged["categorical"]:
+            # Avoid duplicates if already marked as numerical by default
+            if c in merged["numerical"]:
+                merged["numerical"].remove(c)
+            merged["categorical"].append(c)
+    for c, opts in inferred.get("options", {}).items():
+        merged["options"][c] = list(opts)
+    return merged
+
+st.sidebar.title("Model")
+model_path = st.sidebar.text_input("Path to model (.sav)", value="hotel_booking_prediction.sav")
+load_btn = st.sidebar.button("Load / Reload model", type="primary")
+
+# Lazy-load on first render or when user clicks
+if "model_obj" not in st.session_state or load_btn:
     try:
-        prediction = model.predict(input_df)
-        prob = model.predict_proba(input_df) if hasattr(model, 'predict_proba') else None
-        
-        # Display result
-        st.subheader("Prediction Result")
-        if prediction[0] == 1:
-            st.write("**The booking is predicted to be CANCELED.**")
-        else:
-            st.write("**The booking is predicted to NOT be canceled.**")
-        
-        if prob is not None:
-            st.write(f"Probability of Cancellation: {prob[0][1]:.2%}")
+        st.session_state.model_obj = load_model(model_path)
+        st.session_state.inferred_schema = infer_schema_from_model(st.session_state.model_obj)
+        st.sidebar.success("Model loaded.")
     except Exception as e:
+        st.sidebar.error(f"Failed to load model: {e}")
 
-        st.error(f"Error during prediction: {str(e)}. Ensure the input matches the model's expected features.")
+model = st.session_state.get("model_obj", None)
+schema_inferred = st.session_state.get("inferred_schema", {"numerical": [], "categorical": [], "options": {}})
+schema = merge_schema(schema_inferred, DEFAULT_SCHEMA)
 
+st.title("🏨 Hotel Booking Prediction")
+st.caption("Enter raw feature values. The pipeline inside the model will handle preprocessing.")
+
+# Helpful peek
+with st.expander("What did the app find inside your pipeline?"):
+    st.write("Inferred numerical:", schema_inferred.get("numerical", []))
+    st.write("Inferred categorical:", schema_inferred.get("categorical", []))
+    if schema_inferred.get("options", {}).get("country"):
+        st.write(f"Found {len(schema_inferred['options']['country'])} country codes from the model.")
+
+# Randomize/reset helpers
+def randomize_inputs():
+    for k, (mn, mx, _) in NUMERIC_RANGES.items():
+        if k in st.session_state:
+            st.session_state[k] = int(np.random.randint(mn, mx + 1))
+    # For cats, pick a random option if we have them
+    for c in schema["categorical"]:
+        opts = schema["options"].get(c, [])
+        if opts and c in st.session_state:
+            st.session_state[c] = np.random.choice(opts)
+
+left, right = st.columns(2)
+
+# Build the form
+with st.form("booking_form", clear_on_submit=False):
+    st.subheader("Inputs")
+
+    with left:
+        # Numerical controls
+        num_vals = {}
+        for col in schema["numerical"]:
+            if col in NUMERIC_RANGES:
+                mn, mx, default = NUMERIC_RANGES[col]
+            else:
+                # Unknown numeric: give a broad default
+                mn, mx, default = 0, 1000, 0
+            num_vals[col] = st.number_input(
+                col,
+                min_value=int(mn),
+                max_value=int(mx),
+                value=int(default),
+                step=1,
+                key=col,
+            )
+
+    with right:
+        # Categorical controls
+        cat_vals = {}
+        for col in schema["categorical"]:
+            options = schema["options"].get(col, [])
+            # Clean possible duplicates and maintain order
+            options = list(dict.fromkeys(options))
+            # If model didn't reveal options (e.g., unknown col), allow free text
+            if len(options) == 0:
+                cat_vals[col] = st.text_input(col, key=col)
+            else:
+                # Some lists (like country) can be very long; Streamlit selectbox is searchable
+                # Remove NaN-like entries just in case
+                options = [o for o in options if str(o).lower() not in {"nan", "none"}]
+                default_ix = 0 if len(options) > 0 else None
+                cat_vals[col] = st.selectbox(col, options=options, index=default_ix, key=col)
+
+    # Action buttons inside the form
+    b1, b2, b3 = st.columns(3)
+    submit = b1.form_submit_button("Predict", type="primary")
+    rnd = b2.form_submit_button("Randomize")
+    rst = b3.form_submit_button("Reset to defaults")
+
+    if rnd:
+        randomize_inputs()
+        st.experimental_rerun()
+    if rst:
+        for k, (_, _, default) in NUMERIC_RANGES.items():
+            st.session_state[k] = int(default)
+        for c in schema["categorical"]:
+            if schema["options"].get(c):
+                st.session_state[c] = schema["options"][c][0]
+        st.experimental_rerun()
+
+# Do prediction
+if submit:
+    if model is None:
+        st.error("Load the model from the sidebar first.")
+        st.stop()
+
+    # Collect the current values from session_state to ensure we read the latest
+    row = {}
+    for col in schema["numerical"]:
+        row[col] = int(st.session_state.get(col))
+    for col in schema["categorical"]:
+        row[col] = st.session_state.get(col)
+
+    X = pd.DataFrame([row])
+    st.write("Input row:", X)
+
+    try:
+        y_pred = model.predict(X)
+        st.success(f"Prediction: {y_pred[0] if len(y_pred) else y_pred}")
+    except Exception as e:
+        st.error(f"Prediction failed: {e}")
+        st.stop()
+
+    # Show class probabilities if available (typical for classification)
+    proba = None
+    try:
+        proba = model.predict_proba(X)
+    except Exception:
+        proba = None
+
+    if proba is not None:
+        try:
+            classes = None
+            # Try to grab classes_ from the final estimator inside the pipeline
+            final_est = model
+            if hasattr(model, "named_steps"):
+                # Guess the final estimator as the last step
+                last_step_name = list(model.named_steps.keys())[-1]
+                final_est = model.named_steps[last_step_name]
+            if hasattr(final_est, "classes_"):
+                classes = list(final_est.classes_)
+            else:
+                classes = list(range(proba.shape[1]))
+            probs = {str(c): float(p) for c, p in zip(classes, proba[0])}
+            st.write("Class probabilities:", probs)
+        except Exception:
+            pass
+
+# Little “how to”
+with st.expander("How to run this app"):
+    st.write("- Install: pip install streamlit scikit-learn pandas joblib")
+    st.write("- Put hotel_booking_prediction.sav next to app.py (or point to it in the sidebar).")
+    st.write("- Run: streamlit run app.py")
+
+with st.expander("Notes / Troubleshooting"):
+    st.write("- The app lets the pipeline handle all encoding and scaling; just type the raw values.")
+    st.write("- If your saved pipeline exposes OneHotEncoder categories, the app will read them (e.g., full country list).")
+    st.write("- If your model needs extra features not in the defaults, the app will try to discover them; if not, add them to DEFAULT_SCHEMA/NUMERIC_RANGES.")
+    st.write("- If you get 'unknown category' errors, your encoder may not ignore unknowns. Use one of the known options the model reveals.")
