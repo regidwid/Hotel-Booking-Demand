@@ -4,8 +4,8 @@ import pandas as pd
 import numpy as np
 
 # Load the saved pipeline model
- with open('hotel_booking_prediction.sav', 'rb') as f:
-    model = pickle.load(f)
+with open('hotel_booking_prediction.sav', 'rb') as f:
+ model = pickle.load(f)
 
 
 # App title and description
@@ -103,3 +103,4 @@ if st.button("Predict"):
     except Exception as e:
 
         st.error(f"Error during prediction: {str(e)}. Ensure the input matches the model's expected features.")
+
