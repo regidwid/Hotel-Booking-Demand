@@ -25,7 +25,7 @@ except Exception:
 st.set_page_config(page_title="Hotel Booking Prediction", page_icon="🏨", layout="centered")
 warnings.filterwarnings("ignore")
 
-MODEL_FILE = "hotel_booking_prediction_model.sav"
+MODEL_FILE = "hotel_booking_prediction.sav"
 
 # Expected features (based on your provided screenshots)
 EXPECTED_CATEGORICAL = {
