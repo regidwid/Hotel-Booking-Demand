@@ -10,10 +10,7 @@ from pathlib import Path
 
 # Joblib first, pickle as fallback
 def _load_any(path):
-    import joblib, pickle
-    try:
-        return joblib.load(path)
-    except Exception:
+    import pickle
         with open(path, "rb") as f:
             return pickle.load(f)
 
@@ -281,6 +278,7 @@ with st.expander("Notes / Troubleshooting"):
     st.write("- If your saved pipeline exposes OneHotEncoder categories, the app will read them (e.g., full country list).")
     st.write("- If your model needs extra features not in the defaults, the app will try to discover them; if not, add them to DEFAULT_SCHEMA/NUMERIC_RANGES.")
     st.write("- If you get 'unknown category' errors, your encoder may not ignore unknowns. Use one of the known options the model reveals.")
+
 
 
 
