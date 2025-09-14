@@ -2,7 +2,6 @@ import streamlit as st
 import pickle
 import pandas as pd
 import numpy as np
-import sklearn
 import joblib
 
 # Load the saved model (assume it's pickled; use joblib.load if saved with Joblib)
@@ -103,3 +102,4 @@ if st.button("Predict"):
 # Optional: Display input data for debugging
 if st.checkbox("Show Input Data"):
     st.write(input_data)
+
