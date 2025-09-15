@@ -3,7 +3,7 @@ Dibuat oleh : Regi Dwi Darmawan
 ---
 # Background
 
-**Blue Window** adalah perusahaan penyedia layanan pemesanan hotel berbasis digital dan fisik asal Portugal yang berdiri untuk menjawab tantangan dalam industri pariwisata modern. Seiring meningkatnya kebutuhan perjalanan wisata maupun bisnis, konsumen menuntut akses yang lebih cepat, mudah, dan transparan terhadap informasi akomodasi. Blue Window hadir dengan menawarkan solusi melalui platform digital yang memungkinkan pelanggan untuk membandingkan harga, meninjau ulasan, serta melakukan pemesanan hotel secara real-time.
+**Blue Window** adalah perusahaan penyedia layanan pemesanan hotel berbasis digital dan fisik asal Portugal yang berdiri untuk menjawab tantangan dalam industri pariwisata modern. Seiring meningkatnya kebutuhan perjalanan wisata maupun bisnis, konsumen menuntut akses yang lebih cepat, mudah, dan transparan terhadap informasi akomodasi. Blue Window hadir dengan menawarkan solusi melalui platform digital maupun yang memungkinkan pelanggan untuk membandingkan harga, meninjau ulasan, serta melakukan pemesanan hotel secara real-time.
 ---
 # Problem Statement
 
@@ -45,4 +45,33 @@ Platform: Visual Studio Code, Jupyter Notebook, streamlit
 ---
 # How To Run
 
+Step:
+1. Download semua file yang tersedia
+2. Pastikan Python ada berada dalam versi 3.12
+3. Pastikan semua versi dalam [requirements.txt]([url](https://github.com/regidwid/ML-Cancellation-Prediction/blob/main/requirements.txt)) sudah terinstall sesuai versi
+4. Pastikan sudah menginstall VSCode terlebih dahulu lalu buka file [jupyter](https://github.com/regidwid/ML-Cancellation-Prediction/blob/main/JCDS-0808-002-RegiDwiDarmawan.ipynb) yang tersedia.
+5. Sesuaikan path file [data booking hotel](https://github.com/regidwid/ML-Cancellation-Prediction/blob/main/data_hotel_booking_demand.csv) yang ada dalam file jupyter.
+6. Run all (jika tidak memungkinkan melakukan tuning load [model](https://github.com/regidwid/ML-Cancellation-Prediction/blob/main/hotel_booking_prediction_model.sav) pada bagian tuning)
+7. Anda bisa mengotak atik bagian model, tuning, dll seesuka hati untuk mendapatkan hasil yang lebih optimal.
+---
+# Results
 
+Model prediksi yang dikembangkan mampu:
+- Dari semua pembatalan yang terjadi, model ini dapat mengidentifikasi dengan benar 81% di antaranya.
+- Dari semua pemesanan yang tidak dibatalkan, model ini dapat mengidentifikasi dengan benar 78% di antaranya.
+
+Misprediksi ini juga dapat menjadi evaluasi untuk pengembangan lebih lanjut.
+---
+# Streamlit
+
+Streamlit dari model ini dapat dicoba dengan klik [disini.](https://ml-cancellation-prediction-5fsfzukaba5xl9s9zaupgn.streamlit.app/)
+---
+# Note
+
+Hasil model cukup besar bisa menjadi opsi untuk tidak mendownload dan load sendiri saat menjalankan file [jupyter](https://github.com/regidwid/ML-Cancellation-Prediction/blob/main/JCDS-0808-002-RegiDwiDarmawan.ipynb) yang sudah didownload sebelumnya.
+---
+# Author
+
+Regi Dwi Darmawan
+kritik dan saran dapat sangat membantu
+kirimkan melalui regi.dwi21.rd@gmail.com
