@@ -3,7 +3,7 @@ Dibuat oleh : Regi Dwi Darmawan
 ---
 # Background
 
-**Blue Window** adalah perusahaan penyedia layanan pemesanan hotel berbasis digital dan fisik asal Portugal yang berdiri untuk menjawab tantangan dalam industri pariwisata modern. Seiring meningkatnya kebutuhan perjalanan wisata maupun bisnis, konsumen menuntut akses yang lebih cepat, mudah, dan transparan terhadap informasi akomodasi. Blue Window hadir dengan menawarkan solusi melalui platform digital maupun yang memungkinkan pelanggan untuk membandingkan harga, meninjau ulasan, serta melakukan pemesanan hotel secara real-time.
+*Blue Window* adalah perusahaan penyedia layanan pemesanan hotel berbasis digital dan fisik asal Portugal yang berdiri untuk menjawab tantangan dalam industri pariwisata modern. Seiring meningkatnya kebutuhan perjalanan wisata maupun bisnis, konsumen menuntut akses yang lebih cepat, mudah, dan transparan terhadap informasi akomodasi. Blue Window hadir dengan menawarkan solusi melalui platform digital maupun yang memungkinkan pelanggan untuk membandingkan harga, meninjau ulasan, serta melakukan pemesanan hotel secara real-time.
 ---
 # Problem Statement
 
